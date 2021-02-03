@@ -10,11 +10,10 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
       },
     })
   } else {
-		getData().then(function (returnData) {
-			console.log(returnData[0])
-			res.json({
-				success: true
-			})
+		getData().then(function (xmlData) {
+			res.setHeader("Content-Type", "text/xml");
+			res.write(xmlData);
+			res.end();
 		})
   }
 }

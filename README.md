@@ -11,3 +11,6 @@ Launch the following command to start **next** client in local machine and test 
 
 `$ npx next`
 
+Then browse to the local test link:
+
+`http://localhost:3000/api/feed/startProcess`

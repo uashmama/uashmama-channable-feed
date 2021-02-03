@@ -9,19 +9,27 @@ export interface Product {
   description: string
   permalink: string
   variants: {
-    code: string
+		code: string
+		images?: {
+			url: string
+		}[]	
+		color: {
+			name: string
+		}
   }[]
   images?: {
     url: string
   }[]
 }
 
-export interface GoogleProduct {
+export interface ChannableProduct {
   skuCode?: string
-  id: string
+	sku: string
+	mainSku: string
   title: string
   description: string
-  link: string
+	link: string
+	catlink: string
   imageLink: string
   availability: 'in stock' | 'out of stock' | 'preorder'
   price: {
@@ -30,29 +38,32 @@ export interface GoogleProduct {
   }
   offerId: string
   contentLanguage: string
-  targetCountry: string
-  channel: 'online' | 'local'
   customLabel0: string
   customLabel1: string
-  material: string
+	material: string
+	color: string
   condition: 'new'
   additionalImageLinks?: string[]
 }
 
-export type GooglePrice = {
-  value: string
-  currency: string
+export type ChannablePrice = {
+	value: string
+	currency: string
+	currencySymbol: string | null
 }
 
 export type DatoResponse = {
   data: {
-    allCategories: { products: Product[] }[]
+		allCategories: { 
+			permalink: string 
+			products: Product[] 
+		}[]
   }
 }
 
 export type FPReturnObj = {
   skuCodes: string[]
-  products: GoogleProduct[]
+  products: ChannableProduct[]
 }
 
 export interface FilterProducts {
@@ -60,11 +71,7 @@ export interface FilterProducts {
 }
 
 export interface AddPrices {
-	(filterProducts: FPReturnObj): Promise<void | GoogleProduct[]>
-}
-
-export interface InsertOnGoogle {
-  (googleToken: string, products: FPReturnObj['products']): void
+	(filterProducts: FPReturnObj): Promise<ChannableProduct[]>
 }
 
 export interface GetRange {
@@ -72,10 +79,14 @@ export interface GetRange {
 }
 
 type UpdateProductParams = {
-  products: GoogleProduct[]
-  singleProduct: PriceCollection
+  products: ChannableProduct[]
+	price: PriceCollection
 }
 
 export interface UpdateProduct {
-  (params: UpdateProductParams): GoogleProduct | null
+  (params: UpdateProductParams): ChannableProduct[] | null
+}
+
+export interface GetProductsXML {
+	(products: ChannableProduct[]): string
 }

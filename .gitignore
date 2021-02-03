@@ -1,0 +1,28 @@
+# next.js build output
+.next/
+
+# Dependency directories
+node_modules/
+
+# Dist will be dynamically created by CDN builder
+dist/
+
+# dotenv environment variables file
+.env
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# System files
+.DS_STORE

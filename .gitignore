@@ -7,6 +7,8 @@ node_modules/
 # Dist will be dynamically created by CDN builder
 dist/
 
+package-lock.json
+
 # dotenv environment variables file
 .env
 

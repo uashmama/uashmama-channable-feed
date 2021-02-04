@@ -191,7 +191,7 @@ const getData = async () => {
     DT_AUTH,
 		DT_ENDPOINT,
 		DT_LOCALE,
-		DT_MARKET
+		DT_STOREVIEWS
 	} = process.env
 	
 	const clToken = await axios({
@@ -225,7 +225,7 @@ const getData = async () => {
       Authorization: `Bearer ${DT_AUTH}`,
     },
 		data: JSON.stringify({
-			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: ${DT_MARKET}} }){ title permalink products { id name permalink description variants { code images { url } color { name } } material { name } images { url } } } }` }),
+			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}]} }){ title permalink products { id name permalink description variants { code images { url } color { name } } material { name } images { url } } } }` }),
 	}).then(({ data }) => {
 		let products = filterProducts(data)
 		const productsWithPrice = addPrices(products).then(productsWithPriceData => {

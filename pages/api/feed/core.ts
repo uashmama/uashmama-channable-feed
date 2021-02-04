@@ -30,7 +30,7 @@ const getRange: GetRange = (amountFloat, currencySymbol) => {
 }
 
 const filterProducts: FilterProducts = (response) => {
-	const { DT_LOCALE, PERMALINK_BASE, PRODUCT_PREFIX, IMG_QUERY } = process.env
+	const { DT_LOCALE, PERMALINK_BASE, IMG_QUERY } = process.env
 	const skus: string[] = []
 	const returnObj: FPReturnObj = {
     skuCodes: [],
@@ -38,17 +38,18 @@ const filterProducts: FilterProducts = (response) => {
   }
   response.data.allCategories.map((cat) => {
     cat.products.map((p: Product): any => {
-      const cPrice: ChannablePrice = {
+      const price: ChannablePrice = {
 				value: '',
 				currency: '',
 				currencySymbol: ''
-      }
-      const pName = `${p.name.charAt(0).toUpperCase()}${p.name
-        .slice(1)
-        .toLocaleLowerCase()}`
-      const name = PRODUCT_PREFIX ? `${PRODUCT_PREFIX} ${pName}` : pName
-      const material = p.material ? p.material.name : ''
-      
+			}
+			const name = p.name.length ? p.name : p.nameEn
+			const description = p.description.length ? p.description : p.descriptionEn
+			let material = ''
+			if (p.material != undefined) {
+				if (p.material.name.length > 0) material = p.material.name
+				else material = p.material.nameEn
+			}
       const offerId = p.permalink
       const permalink = PERMALINK_BASE
         ? `${PERMALINK_BASE}${p.permalink}`
@@ -78,6 +79,12 @@ const filterProducts: FilterProducts = (response) => {
 					if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
 					return encodeURIComponent(i.url)
 				})
+
+				let color = ''
+				if (v.color != undefined) {
+					if (v.color.name.length > 0) color = v.color.name
+					else color = v.color.nameEn
+				}
 				
 				const gProduct: ChannableProduct = {
 					skuCode,
@@ -87,9 +94,9 @@ const filterProducts: FilterProducts = (response) => {
 					link: permalink,
 					catlink: cat.permalink,
 					imageLink: encodeURIComponent(imgLink),
-					color: v.color && v.color.name ? v.color.name : '',
-					price: cPrice,
-					description: p.description,
+					color,
+					price,
+					description,
 					availability: 'in stock',
 					offerId,
 					contentLanguage: DT_LOCALE,
@@ -225,7 +232,26 @@ const getData = async () => {
       Authorization: `Bearer ${DT_AUTH}`,
     },
 		data: JSON.stringify({
-			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}]} }){ title permalink products { id name permalink description variants { code images { url } color { name } } material { name } images { url } } } }` }),
+			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}] } }){ 
+				title 
+				titleEn: title(locale: en) 
+				permalink 
+				products { 
+					id 
+					name 
+					nameEn: name(locale: en) 
+					permalink 
+					description 
+					descriptionEn: description(locale: en) 
+					variants { 
+						code images { url } color { name nameEn: name(locale: en) } 
+					} 
+					material { 
+						name nameEn: name(locale: en) 
+					} 
+					images { url } 
+				} 
+			} }` }),
 	}).then(({ data }) => {
 		let products = filterProducts(data)
 		const productsWithPrice = addPrices(products).then(productsWithPriceData => {

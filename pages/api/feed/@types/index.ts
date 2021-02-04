@@ -2,11 +2,14 @@ import { PriceCollection } from '@commercelayer/js-sdk'
 
 export interface Product {
   id: string
-  name: string
+	name: string
+	nameEn: string
   material: {
-    name: string
+		name: string
+		nameEn: string
   }
   description: string
+  descriptionEn: string
   permalink: string
   variants: {
 		code: string
@@ -15,6 +18,7 @@ export interface Product {
 		}[]	
 		color: {
 			name: string
+			nameEn: string
 		}
   }[]
   images?: {

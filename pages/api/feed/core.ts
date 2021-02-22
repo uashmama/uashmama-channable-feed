@@ -163,6 +163,18 @@ const addPrices: AddPrices = ({ skuCodes, products }) => {
 	return updatedProductsWithPrices
 }
 
+const escapeHtml: any = (text) => {
+	var map = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	};
+
+	return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+}
+
 const getProductsXML: GetProductsXML = ( products ) => {
 	let xmlOutput = `<?xml version='1.0' encoding='utf-8'?><items>`;
 	for(let i in products) {
@@ -173,11 +185,11 @@ const getProductsXML: GetProductsXML = ( products ) => {
 			<brand>Uashmama</brand>
 			<color>${p.color}</color>
 			<condition>${p.condition}</condition> 
-			<description>${p.description}</description>
+			<description>${escapeHtml(p.description)}</description>
 			<id>${p.sku}</id>
 			<image_link>${p.imageLink}</image_link>
 			<link>${p.link}</link>
-			<material>${p.material}</material>
+			<material>${escapeHtml(p.material)}</material>
 			<price>${p.price.value}</price>
 			<product_type>${p.catlink}</product_type>
 			<sale_price>${p.price.value}</sale_price>

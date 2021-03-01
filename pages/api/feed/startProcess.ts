@@ -12,6 +12,7 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
   } else {
 		getData().then(function (xmlData) {
 			res.setHeader("Content-Type", "text/xml");
+			res.setDefaultEncoding("utf8");
 			res.write(xmlData);
 			res.end();
 		})

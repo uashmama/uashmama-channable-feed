@@ -57,8 +57,10 @@ const filterProducts: FilterProducts = (response) => {
 
 			const productImg = _.first(p.images)?.url || ''
 			const productAdditionalImgs = p.images?.slice(1).map((i) => {
-				if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
-				return encodeURIComponent(i.url)
+				// if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
+				return `${i.url}?${IMG_QUERY}`
+				// return encodeURIComponent(i.url)
+				return i.url
 			})
 
 			const mainSku = _.first(p.variants)?.code || ''
@@ -76,8 +78,10 @@ const filterProducts: FilterProducts = (response) => {
 				const imgLink = getImg && IMG_QUERY ? `${getImg}?${IMG_QUERY}` : ''
 
 				const variantAdditionalImgs = v.images?.slice(1).map((i) => {
-					if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
-					return encodeURIComponent(i.url)
+					//if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
+					if (i.url && IMG_QUERY) return `${i.url}?${IMG_QUERY}`
+					// return encodeURIComponent(i.url)
+					return i.url
 				})
 
 				let color = ''
@@ -93,7 +97,8 @@ const filterProducts: FilterProducts = (response) => {
 					title: name,
 					link: permalink,
 					catlink: cat.permalink,
-					imageLink: encodeURIComponent(imgLink),
+					// imageLink: encodeURIComponent(imgLink),
+					imageLink: imgLink,
 					color,
 					price,
 					description,

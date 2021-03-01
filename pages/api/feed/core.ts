@@ -190,17 +190,17 @@ const getProductsXML: GetProductsXML = ( products ) => {
 			<brand>Uashmama</brand>
 			<color>${p.color}</color>
 			<condition>${p.condition}</condition> 
-			<description>${escapeHtml(p.description)}</description>
+			<description><![CDATA[${escapeHtml(p.description)}]]></description>
 			<id>${p.sku}</id>
 			<image_link>${p.imageLink}</image_link>
 			<link>${p.link}</link>
-			<material>${escapeHtml(p.material)}</material>
+			<material><![CDATA[${escapeHtml(p.material)}]]></material>
 			<price>${p.price.value}</price>
 			<product_type>${p.catlink}</product_type>
 			<sale_price>${p.price.value}</sale_price>
 			<size></size>
 			<stock></stock>
-			<title>${p.title}</title>
+			<title><![CDATA[${p.title}]]></title>
 		</item>`;
 	}
 	xmlOutput += `</items>`;

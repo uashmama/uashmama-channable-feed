@@ -200,6 +200,7 @@ const getProductsXML: GetProductsXML = ( products ) => {
 			<price>${p.price.value}</price>
 			<product_type>${p.catlink}</product_type>
 			<sale_price>${p.price.value}</sale_price>
+			<custom_label_0>${p.customLabel0}</custom_label_0>
 			<size></size>
 			<stock></stock>
 			<title><![CDATA[${p.title}]]></title>

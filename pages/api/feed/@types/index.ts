@@ -4,6 +4,7 @@ export interface Product {
   id: string
 	name: string
 	nameEn: string
+	feedTitleOverride: string
   material: {
 		name: string
 		nameEn: string
@@ -31,7 +32,7 @@ export interface ChannableProduct {
 	sku: string
 	mainSku: string
   title: string
-  description: string
+	description: string
 	link: string
 	catlink: string
   imageLink: string
@@ -58,7 +59,9 @@ export type ChannablePrice = {
 
 export type DatoResponse = {
   data: {
-		allCategories: { 
+		allCategories: {
+			feedTitle: string
+			feedIgnore: boolean
 			permalink: string 
 			products: Product[] 
 		}[]

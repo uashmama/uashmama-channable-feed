@@ -37,87 +37,89 @@ const filterProducts: FilterProducts = (response) => {
     products: [],
   }
   response.data.allCategories.map((cat) => {
-    cat.products.map((p: Product): any => {
-      const price: ChannablePrice = {
-				value: '',
-				currency: '',
-				currencySymbol: ''
-			}
-			const name = p.name.length ? p.name : p.nameEn
-			const description = p.description.length ? p.description : p.descriptionEn
-			let material = ''
-			if (p.material != undefined) {
-				if (p.material.name.length > 0) material = p.material.name
-				else material = p.material.nameEn
-			}
-      const offerId = p.permalink
-      const permalink = PERMALINK_BASE
-        ? `${PERMALINK_BASE}${p.permalink}`
-				: p.permalink
+		if (cat.feedIgnore !== false) {
+			cat.products.map((p: Product): any => {
+				const price: ChannablePrice = {
+					value: '',
+					currency: '',
+					currencySymbol: ''
+				}
+				const name = p.name.length ? p.name : p.nameEn
+				const description = p.description.length ? p.description : p.descriptionEn
+				let material = ''
+				if (p.material != undefined) {
+					if (p.material.name.length > 0) material = p.material.name
+					else material = p.material.nameEn
+				}
+				const offerId = p.permalink
+				const permalink = PERMALINK_BASE
+					? `${PERMALINK_BASE}${p.permalink}`
+					: p.permalink
 
-			const productImg = _.first(p.images)?.url || ''
-			const productAdditionalImgs = p.images?.slice(1).map((i) => {
-				// if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
-				return `${i.url}?${IMG_QUERY}`
-				// return encodeURIComponent(i.url)
-				return i.url
-			})
-
-			const mainSku = _.first(p.variants)?.code || ''
-
-			if (mainSku.length > 0 && returnObj.skuCodes.indexOf(mainSku) === -1) {
-				returnObj.skuCodes.push(mainSku)
-			}
-
-			for (let j in p.variants) {
-				let v = p.variants[j]
-				const skuCode = v.code
-
-				const variantImg = _.first(v.images)?.url || ''
-				const getImg = variantImg != '' ? variantImg : productImg
-				const imgLink = getImg && IMG_QUERY ? `${getImg}?${IMG_QUERY}` : ''
-
-				const variantAdditionalImgs = v.images?.slice(1).map((i) => {
-					//if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
-					if (i.url && IMG_QUERY) return `${i.url}?${IMG_QUERY}`
+				const productImg = _.first(p.images)?.url || ''
+				const productAdditionalImgs = p.images?.slice(1).map((i) => {
+					// if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
+					return `${i.url}?${IMG_QUERY}`
 					// return encodeURIComponent(i.url)
 					return i.url
 				})
 
-				let color = ''
-				if (v.color != undefined) {
-					if (v.color.name.length > 0) color = v.color.name
-					else color = v.color.nameEn
+				const mainSku = _.first(p.variants)?.code || ''
+
+				if (mainSku.length > 0 && returnObj.skuCodes.indexOf(mainSku) === -1) {
+					returnObj.skuCodes.push(mainSku)
 				}
+
+				for (let j in p.variants) {
+					let v = p.variants[j]
+					const skuCode = v.code
+
+					const variantImg = _.first(v.images)?.url || ''
+					const getImg = variantImg != '' ? variantImg : productImg
+					const imgLink = getImg && IMG_QUERY ? `${getImg}?${IMG_QUERY}` : ''
+
+					const variantAdditionalImgs = v.images?.slice(1).map((i) => {
+						//if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
+						if (i.url && IMG_QUERY) return `${i.url}?${IMG_QUERY}`
+						// return encodeURIComponent(i.url)
+						return i.url
+					})
+
+					let color = ''
+					if (v.color != undefined) {
+						if (v.color.name.length > 0) color = v.color.name
+						else color = v.color.nameEn
+					}
+					
+					const gProduct: ChannableProduct = {
+						skuCode,
+						sku: v.code,
+						mainSku,
+						title: name,
+						link: permalink,
+						catlink: cat.permalink,
+						// imageLink: encodeURIComponent(imgLink),
+						imageLink: imgLink,
+						color,
+						price,
+						description,
+						availability: 'in stock',
+						offerId,
+						contentLanguage: DT_LOCALE,
+						customLabel0: p.feedTitleOverride,
+						customLabel1: '> 100',
+						material,
+						condition: 'new',
+						additionalImageLinks: variantAdditionalImgs.length > 0 ? variantAdditionalImgs : productAdditionalImgs,
+					}
 				
-				const gProduct: ChannableProduct = {
-					skuCode,
-					sku: v.code,
-					mainSku,
-					title: name,
-					link: permalink,
-					catlink: cat.permalink,
-					// imageLink: encodeURIComponent(imgLink),
-					imageLink: imgLink,
-					color,
-					price,
-					description,
-					availability: 'in stock',
-					offerId,
-					contentLanguage: DT_LOCALE,
-					customLabel0: 'blank',
-					customLabel1: '> 100',
-					material,
-					condition: 'new',
-					additionalImageLinks: variantAdditionalImgs.length > 0 ? variantAdditionalImgs : productAdditionalImgs,
+					if (skus.indexOf(v.code) === -1) {
+						returnObj.products.push(gProduct)
+						skus.push(v.code)
+					}
 				}
-			
-				if (skus.indexOf(v.code) === -1) {
-					returnObj.products.push(gProduct)
-					skus.push(v.code)
-				}
-			}
-    })
+			})
+		}
 	})
   return returnObj
 }
@@ -252,11 +254,14 @@ const getData = async () => {
 			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}] } }){ 
 				title 
 				titleEn: title(locale: en) 
+				feedTitle
+				feedIgnore
 				permalink 
 				products { 
 					id 
 					name 
 					nameEn: name(locale: en) 
+					feedTitleOverride
 					permalink 
 					description 
 					descriptionEn: description(locale: en) 

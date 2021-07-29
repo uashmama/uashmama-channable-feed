@@ -48,7 +48,8 @@ export interface ChannableProduct {
 	material: string
 	color: string
   condition: 'new'
-  additionalImageLinks?: string[]
+  additionalImageLinks?: string[],
+	googleCat: number
 }
 
 export type ChannablePrice = {
@@ -60,6 +61,7 @@ export type ChannablePrice = {
 export type DatoResponse = {
   data: {
 		allCategories: {
+			id: number
 			feedTitle: string
 			feedIgnore: boolean
 			permalink: string 

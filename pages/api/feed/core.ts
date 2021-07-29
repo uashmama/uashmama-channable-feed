@@ -111,6 +111,7 @@ const filterProducts: FilterProducts = (response) => {
 						material,
 						condition: 'new',
 						additionalImageLinks: variantAdditionalImgs.length > 0 ? variantAdditionalImgs : productAdditionalImgs,
+						googleCat: cat.id
 					}
 				
 					if (skus.indexOf(v.code) === -1) {
@@ -204,6 +205,7 @@ const getProductsXML: GetProductsXML = ( products ) => {
 			<size></size>
 			<stock></stock>
 			<title><![CDATA[${p.title}]]></title>
+			<google_product_category><![CDATA[${p.googleCat}]]></google_product_category>
 		</item>`;
 	}
 	xmlOutput += `</items>`;
@@ -253,6 +255,7 @@ const getData = async () => {
     },
 		data: JSON.stringify({
 			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}] } }){ 
+				id
 				title 
 				titleEn: title(locale: en) 
 				feedTitle

@@ -36,8 +36,8 @@ const filterProducts: FilterProducts = (response) => {
     skuCodes: [],
     products: [],
   }
-  response.data.allCategories.map((cat) => {
-		if (cat.feedIgnore !== false) {
+	response.data.allCategories.map((cat) => {
+		if (cat.feedIgnore !== true) {
 			cat.products.map((p: Product): any => {
 				const price: ChannablePrice = {
 					value: '',

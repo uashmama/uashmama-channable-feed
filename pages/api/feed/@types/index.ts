@@ -12,6 +12,8 @@ export interface Product {
   description: string
   descriptionEn: string
   permalink: string
+	enabledMarkets: { id: number },
+	disabledMarkets: { id: number }
   variants: {
 		code: string
 		images?: {
@@ -21,6 +23,8 @@ export interface Product {
 			name: string
 			nameEn: string
 		}
+		enabledMarkets: { id: number },
+		disabledMarkets: { id: number }
   }[]
   images?: {
     url: string

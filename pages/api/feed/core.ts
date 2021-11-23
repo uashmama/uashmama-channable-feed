@@ -39,84 +39,88 @@ const filterProducts: FilterProducts = (response) => {
 	response.data.allCategories.map((cat) => {
 		if (cat.feedIgnore !== true) {
 			cat.products.map((p: Product): any => {
-				const price: ChannablePrice = {
-					value: '',
-					currency: '',
-					currencySymbol: ''
-				}
-				const name = p.name.length ? p.name : p.nameEn
-				const description = p.description.length ? p.description : p.descriptionEn
-				let material = ''
-				if (p.material != undefined) {
-					if (p.material.name.length > 0) material = p.material.name
-					else material = p.material.nameEn
-				}
-				const offerId = p.permalink
-				const permalink = PERMALINK_BASE
-					? `${PERMALINK_BASE}${p.permalink}`
-					: p.permalink
+				if (storeViewsEnabled(p)) {
+					const price: ChannablePrice = {
+						value: '',
+						currency: '',
+						currencySymbol: ''
+					}
+					const name = p.name.length ? p.name : p.nameEn
+					const description = p.description.length ? p.description : p.descriptionEn
+					let material = ''
+					if (p.material != undefined) {
+						if (p.material.name.length > 0) material = p.material.name
+						else material = p.material.nameEn
+					}
+					const offerId = p.permalink
+					const permalink = PERMALINK_BASE
+						? `${PERMALINK_BASE}${p.permalink}`
+						: p.permalink
 
-				const productImg = _.first(p.images)?.url || ''
-				const productAdditionalImgs = p.images?.slice(1).map((i) => {
-					// if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
-					return `${i.url}?${IMG_QUERY}`
-					// return encodeURIComponent(i.url)
-					return i.url
-				})
-
-				const mainSku = _.first(p.variants)?.code || ''
-
-				if (mainSku.length > 0 && returnObj.skuCodes.indexOf(mainSku) === -1) {
-					returnObj.skuCodes.push(mainSku)
-				}
-
-				for (let j in p.variants) {
-					let v = p.variants[j]
-					const skuCode = v.code
-
-					const variantImg = _.first(v.images)?.url || ''
-					const getImg = variantImg != '' ? variantImg : productImg
-					const imgLink = getImg && IMG_QUERY ? `${getImg}?${IMG_QUERY}` : ''
-
-					const variantAdditionalImgs = v.images?.slice(1).map((i) => {
-						//if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
-						if (i.url && IMG_QUERY) return `${i.url}?${IMG_QUERY}`
+					const productImg = _.first(p.images)?.url || ''
+					const productAdditionalImgs = p.images?.slice(1).map((i) => {
+						// if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
+						return `${i.url}?${IMG_QUERY}`
 						// return encodeURIComponent(i.url)
 						return i.url
 					})
 
-					let color = ''
-					if (v.color != undefined) {
-						if (v.color.name.length > 0) color = v.color.name
-						else color = v.color.nameEn
+					const mainSku = _.first(p.variants)?.code || ''
+
+					if (mainSku.length > 0 && returnObj.skuCodes.indexOf(mainSku) === -1) {
+						returnObj.skuCodes.push(mainSku)
 					}
-					
-					const gProduct: ChannableProduct = {
-						skuCode,
-						sku: v.code,
-						mainSku,
-						title: name,
-						link: permalink,
-						catlink: cat.permalink,
-						// imageLink: encodeURIComponent(imgLink),
-						imageLink: imgLink,
-						color,
-						price,
-						description,
-						availability: 'in stock',
-						offerId,
-						contentLanguage: DT_LOCALE,
-						customLabel0: p.feedTitleOverride,
-						customLabel1: '> 100',
-						material,
-						condition: 'new',
-						additionalImageLinks: variantAdditionalImgs.length > 0 ? variantAdditionalImgs : productAdditionalImgs,
-						googleCat: cat.id
-					}
-				
-					if (skus.indexOf(v.code) === -1) {
-						returnObj.products.push(gProduct)
-						skus.push(v.code)
+
+					for (let j in p.variants) {
+						let v = p.variants[j]
+						if (storeViewsEnabled(v)) {
+							const skuCode = v.code
+
+							const variantImg = _.first(v.images)?.url || ''
+							const getImg = variantImg != '' ? variantImg : productImg
+							const imgLink = getImg && IMG_QUERY ? `${getImg}?${IMG_QUERY}` : ''
+
+							const variantAdditionalImgs = v.images?.slice(1).map((i) => {
+								//if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
+								if (i.url && IMG_QUERY) return `${i.url}?${IMG_QUERY}`
+								// return encodeURIComponent(i.url)
+								return i.url
+							})
+
+							let color = ''
+							if (v.color != undefined) {
+								if (v.color.name.length > 0) color = v.color.name
+								else color = v.color.nameEn
+							}
+							
+							const gProduct: ChannableProduct = {
+								skuCode,
+								sku: v.code,
+								mainSku,
+								title: name,
+								link: permalink,
+								catlink: cat.permalink,
+								// imageLink: encodeURIComponent(imgLink),
+								imageLink: imgLink,
+								color,
+								price,
+								description,
+								availability: 'in stock',
+								offerId,
+								contentLanguage: DT_LOCALE,
+								customLabel0: p.feedTitleOverride,
+								customLabel1: '> 100',
+								material,
+								condition: 'new',
+								additionalImageLinks: variantAdditionalImgs.length > 0 ? variantAdditionalImgs : productAdditionalImgs,
+								googleCat: cat.id
+							}
+						
+							if (skus.indexOf(v.code) === -1) {
+								returnObj.products.push(gProduct)
+								skus.push(v.code)
+							}
+						}
 					}
 				}
 			})
@@ -181,6 +185,22 @@ const escapeHtml: any = (text) => {
 	};
 
 	return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+}
+
+const storeViewsEnabled: any = (item) => {
+	const {
+		DT_STOREVIEWS
+	} = process.env
+
+	const enabledMarketsIds = item.enabledMarkets?.length !== 0 ? item.enabledMarkets.map((m: any) => {
+		return m.id
+	}) : []
+
+	const disabledMarketsIds = item.disabledMarkets?.length !== 0 ? item.disabledMarkets.map((m: any) => {
+		return m.id
+	}) : []
+
+	return (item.enabledMarkets?.length !== 0 && enabledMarketsIds.indexOf(DT_STOREVIEWS) > -1) && (item.disabledMarkets?.length === 0 || (item.disabledMarkets?.length !== 0 && disabledMarketsIds.indexOf(DT_STOREVIEWS) === -1))
 }
 
 const getProductsXML: GetProductsXML = ( products ) => {
@@ -254,7 +274,7 @@ const getData = async () => {
       Authorization: `Bearer ${DT_AUTH}`,
     },
 		data: JSON.stringify({
-			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}] } }){ 
+			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}] } disabledMarkets : { notIn: [ ${DT_STOREVIEWS} ] } }){ 
 				id
 				title 
 				titleEn: title(locale: en) 
@@ -268,9 +288,10 @@ const getData = async () => {
 					feedTitleOverride
 					permalink 
 					description 
-					descriptionEn: description(locale: en) 
+					descriptionEn: description(locale: en)
+					enabledMarkets { id } disabledMarkets { id }
 					variants { 
-						code images { url } color { name nameEn: name(locale: en) } 
+						code images { url } color { name nameEn: name(locale: en) } enabledMarkets { id } disabledMarkets { id }
 					} 
 					material { 
 						name nameEn: name(locale: en) 

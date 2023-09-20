@@ -29,6 +29,6 @@
     "debug": "tsdx watch -i pages/api/feed/core.ts"
   },
   "engines": {
-    "node": "12.x"
+    "node": "16.x"
   }
 }

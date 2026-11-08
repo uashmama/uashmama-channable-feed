@@ -201,15 +201,15 @@ const getProductsXML: GetProductsXML = ( products ) => {
 	for(let i in products) {
 		let p = products[i]
 		xmlOutput += `<item>
-			<additional_image_link>${p.additionalImageLinks.join(',')}</additional_image_link>
+			<additional_image_link>${escapeHtml(p.additionalImageLinks.join(','))}</additional_image_link>
 			<availability>${p.availability}</availability>
 			<brand>Uashmama</brand>
 			<color>${p.color}</color>
 			<condition>${p.condition}</condition> 
 			<description><![CDATA[${escapeHtml(p.description)}]]></description>
 			<id>${p.sku}</id>
-			<image_link>${p.imageLink}</image_link>
-			<link>${p.link}</link>
+			<image_link>${escapeHtml(p.imageLink)}</image_link>
+			<link>${escapeHtml(p.link)}</link>
 			<material><![CDATA[${escapeHtml(p.material)}]]></material>
 			<price>${p.price.value}</price>
 			<product_type>${p.catlink}</product_type>

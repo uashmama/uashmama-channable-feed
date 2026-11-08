@@ -9,6 +9,10 @@ dist/
 
 # dotenv environment variables file
 .env
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
 
 # Log files
 npm-debug.log*

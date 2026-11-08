@@ -14,6 +14,15 @@ export default (req: NextApiRequest, res: NextApiResponse) => {
 			res.setHeader("Content-Type", "text/xml; charset=utf-8");
 			res.write(xmlData);
 			res.end();
+	}).catch(function (error) {
+			console.error(error)
+			res.status(500).json({
+				success: false,
+				error: {
+					code: 'ERROR',
+					message: error instanceof Error ? error.message : String(error),
+				},
+			})
 		})
   }
 }

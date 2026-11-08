@@ -1,16 +1,15 @@
-import axios from 'axios'
-import _ from 'lodash'
+import { authenticate } from '@commercelayer/js-auth'
+import { CommerceLayer, type CommerceLayerClient } from '@commercelayer/sdk'
 import {
   Product,
   ChannableProduct,
   ChannablePrice,
   FPReturnObj,
   GetRange,
-  UpdateProduct,
 	GetProductsXML,
+	FilterProducts,
+	AddPrices,
 } from './@types'
-import CLayer from '@commercelayer/js-sdk'
-import { FilterProducts, AddPrices } from './@types/index'
 
 const getRange: GetRange = (amountFloat, currencySymbol) => {
   let range = ''
@@ -41,7 +40,7 @@ const filterProducts: FilterProducts = (response) => {
 			cat.products.map((p: Product): any => {
 				if (storeViewsEnabled(p)) {
 					const price: ChannablePrice = {
-						value: '',
+						value: 0,
 						currency: '',
 						currencySymbol: ''
 					}
@@ -57,7 +56,7 @@ const filterProducts: FilterProducts = (response) => {
 						? `${PERMALINK_BASE}${p.permalink}`
 						: p.permalink
 
-					const productImg = _.first(p.images)?.url || ''
+					const productImg = p.images?.[0]?.url || ''
 					const productAdditionalImgs = p.images?.slice(1).map((i) => {
 						// if (i.url && IMG_QUERY) return encodeURIComponent(`${i.url}?${IMG_QUERY}`)
 						return `${i.url}?${IMG_QUERY}`
@@ -65,7 +64,7 @@ const filterProducts: FilterProducts = (response) => {
 						return i.url
 					})
 
-					const mainSku = _.first(p.variants)?.code || ''
+					const mainSku = p.variants?.[0]?.code?.trim() || ''
 
 					if (mainSku.length > 0 && returnObj.skuCodes.indexOf(mainSku) === -1) {
 						returnObj.skuCodes.push(mainSku)
@@ -74,9 +73,9 @@ const filterProducts: FilterProducts = (response) => {
 					for (let j in p.variants) {
 						let v = p.variants[j]
 						if (storeViewsEnabled(v)) {
-							const skuCode = v.code
+							const skuCode = v.code.trim()
 
-							const variantImg = _.first(v.images)?.url || ''
+							const variantImg = v.images?.[0]?.url || ''
 							const getImg = variantImg != '' ? variantImg : productImg
 							const imgLink = getImg && IMG_QUERY ? `${getImg}?${IMG_QUERY}` : ''
 
@@ -95,7 +94,7 @@ const filterProducts: FilterProducts = (response) => {
 							
 							const gProduct: ChannableProduct = {
 								skuCode,
-								sku: v.code,
+								sku: skuCode,
 								mainSku,
 								title: name,
 								link: permalink,
@@ -116,9 +115,9 @@ const filterProducts: FilterProducts = (response) => {
 								googleCat: cat.id
 							}
 						
-							if (skus.indexOf(v.code) === -1) {
+							if (skus.indexOf(skuCode) === -1) {
 								returnObj.products.push(gProduct)
-								skus.push(v.code)
+								skus.push(skuCode)
 							}
 						}
 					}
@@ -129,50 +128,44 @@ const filterProducts: FilterProducts = (response) => {
   return returnObj
 }
 
-const addPrices: AddPrices = ({ skuCodes, products }) => {
-	const getPrices = CLayer.Price.where({
-    skuCodeIn: skuCodes.join(','),
-	}).all()
-  const updatedProductsWithPrices = getPrices.then(async (prices) => {
-		let pricesData: any[] = []
+const addPrices: AddPrices = async (cl, { skuCodes, products }) => {
+	const pricesData: Record<string, ChannablePrice> = {}
 
-		prices.toArray().map((p) => {
-			pricesData[p.skuCode] = {
-				value: p.amountFloat,
-				currency: p.currencyCode,
-				currencySymbol: p.formattedAmount.charAt(0)
+	let pageNumber = 1
+	let pageCount = 1
+	do {
+		const prices = await cl.prices.list({
+			filters: { sku_code_in: skuCodes.join(',') },
+			fields: { prices: ['sku_code', 'amount_float', 'currency_code', 'formatted_amount'] },
+			pageSize: 25,
+			pageNumber,
+		})
+		prices.forEach((p) => {
+			pricesData[p.sku_code] = {
+				value: p.amount_float,
+				currency: p.currency_code,
+				currencySymbol: p.formatted_amount.charAt(0)
 			}
 		})
-		const pageCount = prices.pageCount()
-		let nextPrs = prices
-		if (prices.hasNextPage() && pageCount) {
-			for (let count = 1; count < pageCount; count++) {
-				nextPrs = await nextPrs.nextPage()
-				nextPrs.toArray().map((p) => {
-					pricesData[p.skuCode] = {
-						value: p.amountFloat,
-						currency: p.currencyCode,
-						currencySymbol: p.formattedAmount.charAt(0)
-					}
-				})
+		pageCount = prices.meta.pageCount
+		pageNumber++
+	} while (pageNumber <= pageCount)
+
+	const missingSkus = skuCodes.filter((code) => !pricesData[code])
+	if (missingSkus.length > 0) {
+		console.warn(`Products skipped, no price found for main SKUs: ${missingSkus.join(', ')}`)
+	}
+
+	return products
+		.filter((product) => pricesData[product.mainSku])
+		.map((product) => {
+			const { value, currency, currencySymbol } = pricesData[product.mainSku]
+			return {
+				...product,
+				price: { value, currency },
+				customLabel1: getRange(value, currencySymbol),
 			}
-		}
-
-		for (let index in products) {
-			products[index].price = {
-				currency: pricesData[products[index].mainSku].currency,
-				value: pricesData[products[index].mainSku].value
-			};
-
-			products[index].customLabel1 = getRange(
-				pricesData[products[index].mainSku].value,
-				pricesData[products[index].mainSku].currencySymbol
-			);
-		}
-
-		return products
-	});
-	return updatedProductsWithPrices
+		})
 }
 
 const escapeHtml: any = (text) => {
@@ -232,48 +225,34 @@ const getProductsXML: GetProductsXML = ( products ) => {
 	return xmlOutput;
 }
 
+const getCommerceLayerClient = async (): Promise<CommerceLayerClient> => {
+	const { CL_CLIENT_ID, CL_MARKET_CODE } = process.env
+
+	const { accessToken } = await authenticate('client_credentials', {
+		clientId: CL_CLIENT_ID,
+		scope: `market:code:${CL_MARKET_CODE}`,
+	})
+
+	return CommerceLayer({ accessToken, apiVersion: '2026-05' })
+}
+
 const getData = async () => {
   const {
-    CL_CLIENT_ID,
-    CL_ENDPOINT,
-    CL_MARKET_ID,
     DT_AUTH,
 		DT_ENDPOINT,
 		DT_LOCALE,
 		DT_STOREVIEWS
 	} = process.env
-	
-	const clToken = await axios({
-		url: `${CL_ENDPOINT}/oauth/token`,
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		data: JSON.stringify({
-			grant_type: 'client_credentials',
-			client_id: CL_CLIENT_ID,
-			scope: `market:${CL_MARKET_ID}`,
-		}),
-	})
-	if (clToken.data.access_token) {
-		try {
-			CLayer.init({
-				accessToken: clToken.data.access_token,
-				endpoint: CL_ENDPOINT as string,
-			})
-		} catch (error) {
-			console.info('clInitError', error)
-		}
-	}
 
-	const datoCms = await axios({
-    url: DT_ENDPOINT,
+	const cl = await getCommerceLayerClient()
+
+	const datoCmsResponse = await fetch(DT_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${DT_AUTH}`,
     },
-		data: JSON.stringify({
+		body: JSON.stringify({
 			query: `{ allCategories(first:100, locale: ${DT_LOCALE}, filter: { catalogo: {eq:false} visible: {eq: true} allProductsCategory: {eq: false} enabledMarkets: {anyIn: [${DT_STOREVIEWS}] } disabledMarkets : { notIn: [ ${DT_STOREVIEWS} ] } }){ 
 				id
 				title 
@@ -299,17 +278,15 @@ const getData = async () => {
 					images { url } 
 				} 
 			} }` }),
-	}).then(({ data }) => {
-		let products = filterProducts(data)
-		const productsWithPrice = addPrices(products).then(productsWithPriceData => {
-			return productsWithPriceData
-		})
-		return productsWithPrice
-	});
+	})
+	if (!datoCmsResponse.ok) {
+		throw new Error(`DatoCMS request failed with status ${datoCmsResponse.status}`)
+	}
 
-	// console.info('product data', datoCms[0])
+	const products = filterProducts(await datoCmsResponse.json())
+	const productsWithPrice = await addPrices(cl, products)
 
-	return getProductsXML(datoCms);
+	return getProductsXML(productsWithPrice);
 }
 
 export default getData

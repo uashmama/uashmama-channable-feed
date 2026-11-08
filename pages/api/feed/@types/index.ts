@@ -1,4 +1,4 @@
-import { PriceCollection } from '@commercelayer/js-sdk'
+import type { CommerceLayerClient } from '@commercelayer/sdk'
 
 export interface Product {
   id: string
@@ -42,7 +42,7 @@ export interface ChannableProduct {
   imageLink: string
   availability: 'in stock' | 'out of stock' | 'preorder'
   price: {
-    value: string
+    value: number
     currency: string
   }
   offerId: string
@@ -57,7 +57,7 @@ export interface ChannableProduct {
 }
 
 export type ChannablePrice = {
-	value: string
+	value: number
 	currency: string
 	currencySymbol: string | null
 }
@@ -84,20 +84,11 @@ export interface FilterProducts {
 }
 
 export interface AddPrices {
-	(filterProducts: FPReturnObj): Promise<ChannableProduct[]>
+	(cl: CommerceLayerClient, filterProducts: FPReturnObj): Promise<ChannableProduct[]>
 }
 
 export interface GetRange {
   (amountFloat: number, currencySymbol: string): string
-}
-
-type UpdateProductParams = {
-  products: ChannableProduct[]
-	price: PriceCollection
-}
-
-export interface UpdateProduct {
-  (params: UpdateProductParams): ChannableProduct[] | null
 }
 
 export interface GetProductsXML {
